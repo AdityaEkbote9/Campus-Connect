@@ -15,10 +15,29 @@ import reviewRoutes from "./routes/reviews.js";
 import { errorResponse } from "./utils/apiResponse.js";
 
 const app = express();
+const normalizeOrigin = (origin = "") => origin.replace(/\/$/, "");
+const configuredOrigin = normalizeOrigin(process.env.CLIENT_ORIGIN || "");
+const allowedOrigins = new Set(
+  [configuredOrigin, "http://127.0.0.1:5173", "http://localhost:5173"].filter(Boolean)
+);
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN,
+    origin(origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const normalizedOrigin = normalizeOrigin(origin);
+      const isAllowedVercelPreview =
+        configuredOrigin.includes(".vercel.app") && normalizedOrigin.endsWith(".vercel.app");
+
+      if (allowedOrigins.has(normalizedOrigin) || isAllowedVercelPreview) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true
   })
 );

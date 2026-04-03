@@ -9,3 +9,4 @@ build
 data/db
 tools/node-v20.20.1-win-x64
 *.zip
+.cache
